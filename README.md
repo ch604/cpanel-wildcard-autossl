@@ -1,5 +1,9 @@
 # cpanel-wildcard-autossl
-A certbot extension which automatically renews and installs wildcard certificates with DNS-01 verification from Cloudflare on cPanel servers
+A certbot extension which automatically renews and installs wildcard certificates with DNS-01 verification from Cloudflare on cPanel servers. If you have:
+* cPanel
+* Wildcard Subdomains
+* Cloudflare
+... and you want free auto-renewing SSLs, then this script is for you!
 
 ## What is it?
 cPanel helpfully will order SSLs for you through Let's Encrypt for all of your hosted sites if you so choose, however with wildcard subdomains, it REQUIRES control of DNS in order to perform validation. Many times, clients will wish to use CloudFlare as their DNS provider, but still want wildcard SSLs installed.

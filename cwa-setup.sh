@@ -6,10 +6,13 @@
 version=0.1
 
 #ensure we have the right environment
-[ ! "$(whoami)" = "root" ] && echo "Need to run as root!" && exit 99
 [ "$(ps h -p "$$" -o comm)" != "bash" ] && exec bash $0 $*
+[ ! "$(whoami)" = "root" ] && echo "Need to run as root!" && exit 99
 [ ! -f /etc/wwwacct.conf ] && echo "/etc/wwwacct.conf not found! Not a cpanel server?" && exit 99
 
+###########
+# FUNCTIONS
+###########
 
 helptext() {
 	echo "
@@ -40,6 +43,10 @@ This will set up *.domain.tld on a cronjob.
 			cPanel's control (/etc/letsencrypt/*)
 "
 }
+
+################
+# MAIN EXECUTION
+################
 
 if [ "$#" -lt "1" ]; then #no arguments passed
         helptext
@@ -74,6 +81,18 @@ done
 
 osver=$(rpm --eval %rhel)
 
+case $mode in
+	add)	:
+		;;
+	remove)	:
+		;;
+	update)	:
+		;;
+	uninstall)	:
+		;;
+	*)	:
+		;;
+esac
 
 #add mode, ensure we have the correct rpms installed (based on our os version), ensure the domain has a wildcard subdomain set up, ensure that wildcard subdomain has a self-signed cert and add as needed, then ask for the cloudflare api token. write this to a secure file, then ask certbot to order the certificate. pull that cert from wherever it goes and add into whm via whmapi. write a post hook for the domain, and a cron job for the cpanel user to automatically check the cert nightly. ensure that certbot.timer is disabled in favor of our own cronjobs.
 
