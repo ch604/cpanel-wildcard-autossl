@@ -5,8 +5,11 @@
 
 version=0.1
 
-#ensure we are using bash
+#ensure we have the right environment
+[ ! "$(whoami)" = "root" ] && echo "Need to run as root!" && exit 99
 [ "$(ps h -p "$$" -o comm)" != "bash" ] && exec bash $0 $*
+[ ! -f /etc/wwwacct.conf ] && echo "/etc/wwwacct.conf not found! Not a cpanel server?" && exit 99
+
 
 helptext() {
 	echo "
@@ -40,13 +43,13 @@ This will set up *.domain.tld on a cronjob.
 
 if [ "$#" -lt "1" ]; then #no arguments passed
         helptext
-        exit
+        exit 1
 fi
 
 while getopts :ha:r:xu opt; do #parse arguments
 	case $opt in
 		h)	helptext
-			exit
+			exit 99
 			;;
 		x)	mode=uninstall
 			;;
@@ -58,21 +61,33 @@ while getopts :ha:r:xu opt; do #parse arguments
 		r)	mode=remove
 			domain=$OPTARG
 			;;
-		\?)	echo "  Invalid option: -$OPTARG"
+		\?)	echo -e "\n  Invalid option: -$OPTARG"
 			helptext
-			exit
+			exit 2
 			;;
-		:)	echo "  Option -$OPTARG requires an argument"
+		:)	echo -e "\n  Option -$OPTARG requires an argument"
 			helptext
-			exit
+			exit 3
 			;;
 	esac
 done
 
-#uninstall mode, list out all possible files that we could have created and all possible rpms we could have installed and remove them. print out which domains were set up at this point in time, and when their certs are due to expire. clean up the letsencrypt storage folder.
+osver=$(rpm --eval %rhel)
+
 
 #add mode, ensure we have the correct rpms installed (based on our os version), ensure the domain has a wildcard subdomain set up, ensure that wildcard subdomain has a self-signed cert and add as needed, then ask for the cloudflare api token. write this to a secure file, then ask certbot to order the certificate. pull that cert from wherever it goes and add into whm via whmapi. write a post hook for the domain, and a cron job for the cpanel user to automatically check the cert nightly. ensure that certbot.timer is disabled in favor of our own cronjobs.
 
 #remove mode, remove any files we may have possibly created in relation to the given domain (credentials, post hook, cron job)
 
+#update mode, find any files we could have created for all cpanel accounts, check their versions against the ones available on github, and then update each file as needed. verify functionality and revert if problems.
+
+#uninstall mode, list out all possible files that we could have created and all possible rpms we could have installed and remove them. print out which domains were set up at this point in time, and when their certs are due to expire. clean up the letsencrypt storage folder.
+
 #TODO handle domains removed from cpanel at crontime
+#TODO handle removed api tokens
+
+#exit codes:
+# 0	success
+# 99	bad environment, or -h passed
+# 2	invalid option passed
+# 3	no domain name passed
