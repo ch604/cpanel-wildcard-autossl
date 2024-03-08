@@ -134,7 +134,8 @@ order_new_ssl() {
 	export CF_Token CF_Zone_ID
 	/root/.acme.sh/acme.sh --issue --dns dns_cf -d "*.$domain" --server letsencrypt --renew-hook $dir/$domain.hook.sh &> /dev/null
 	if [ $? -eq 0 ]; then
-		
+		echo "Order success! Installing new cert..."
+		bash $dir/$domain.hook.sh &> /dev/null
 	else
 		echo "There was a problem running acme.sh!"
 		echo "Please check the log files at /root/.acme.sh/acme.sh.log and try again."
