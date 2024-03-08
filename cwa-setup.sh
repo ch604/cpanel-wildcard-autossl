@@ -50,6 +50,8 @@ installs() {
 	true | cpan -v &> /dev/null #make sure cpan defaults are stored
 	/usr/local/cpanel/bin/cpanm URI::Escape &> /dev/null
 	# set up python
+	[ ! $(which python 2> /dev/null) ] && [ $(which python2 2> /dev/null) ] && ln -s $(which python2) /usr/bin/python
+	[ ! $(which python 2> /dev/null) ] && [ $(which python3 2> /dev/null) ] && ln -s $(which python3) /usr/bin/python
 	[ ! $(which python 2> /dev/null) ] && yum -y -q install python
 	# set up acme.sh
 	bash <(curl https://get.acme.sh/) &> /dev/null
@@ -64,15 +66,46 @@ installs() {
 	fi
 }
 
+domaincheck() {
+	if ! grep -q ^*.${domain}: /etc/userdatadomains; then
+		echo "This domain is not set up for wildcard hosting on this server!"
+		echo "I checked /etc/userdatadomains for *.$domain."
+		echo "Please fix this and try again."
+		exit 6
+	fi
+}
+
 store_cf_token() {
 	echo "Please pass the CloudFlare API Token you created for $domain:"
 	read -e token
-	touch $dir/$domain.ini
-	chmod 400 $dir/$domain.ini
-	echo 'CF_Token="'$token'"' > $dir/$domain.ini
-	output=$(curl -s -X GET https://api.cloudflare.com/client/v4/zones -H "Authorization: Bearer $token" -H "Content-Type: application/json")
-	unset token
-
+	output=$(mktemp)
+	curl -s -X GET https://api.cloudflare.com/client/v4/zones -H "Authorization: Bearer $token" -H "Content-Type: application/json" > $output
+	if cat $output | python -c 'import sys,json; tokens=json.load(sys.stdin); print (tokens["success"])' | grep -q -i True; then
+		if [ $(cat $output | python -c 'import sys,json; tokens=json.load(sys.stdin); print len(tokens["result"])') -eq 1 ]; then
+			touch $dir/$domain.ini
+			chmod 400 $dir/$domain.ini
+			echo 'CF_Token="'$token'"' > $dir/$domain.ini
+			echo 'CF_Zone_ID="'$(cat $output | python -c 'import sys,json; tokens=json.load(sys.stdin); print (tokens["result"][0]["id"])')'"' >> $dir/$domain.ini
+		else
+			echo "There was a problem using the supplied token!"
+			echo "This token controls more than one domain!"
+			cat $output | python -c 'import sys,json; tokens=json.load(sys.stdin)
+for token in tokens["result"] : print (token["name"])'
+			echo "Please make a new token scoped to a single domain, and try again."
+			\rm -f $output
+			unset token output
+			exit 5
+		fi
+	else
+		echo "There was a problem using the supplied token!"
+		cat $output | python -c 'import sys,json; tokens=json.load(sys.stdin); print (tokens["errors"])'
+		echo "Please fix this error and try again."
+		\rm -f $output
+		unset token output
+		exit 5
+	fi
+	\rm -f $output
+	unset token output
 }
 
 ################
@@ -112,6 +145,8 @@ done
 
 case $mode in
 	add)	installs
+		domaincheck
+		store_cf_token
 		;;
 	remove)	:
 		;;
@@ -140,3 +175,5 @@ esac
 # 2	invalid option passed
 # 3	no domain name passed
 # 4	installs failed
+# 5	bad api token
+# 6	missing subdomain
