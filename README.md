@@ -3,6 +3,7 @@ A certbot extension which automatically renews and installs wildcard certificate
 * cPanel
 * Wildcard Subdomains
 * Cloudflare
+
 ... and you want free auto-renewing SSLs, then this script is for you!
 
 ## What is it?
