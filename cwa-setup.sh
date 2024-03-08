@@ -21,7 +21,7 @@ Version $version
 
 Set up your cPanel server to automatically install and renew
 Let's Encrypt certificates for wildcard subdomains which
-have DNS on CloudFlare.
+have DNS on CloudFlare. Certs pulled with acme.sh.
 
 USAGE
 Prepare yourself an API token from CloudFlare for the domain
@@ -45,6 +45,34 @@ This will set up *.domain.tld on a cronjob.
 }
 
 installs() {
+	echo "Setting up supporting software..."
+	# set up URI::Escape
+	true | cpan -v &> /dev/null #make sure cpan defaults are stored
+	/usr/local/cpanel/bin/cpanm URI::Escape &> /dev/null
+	# set up python
+	[ ! $(which python 2> /dev/null) ] && yum -y -q install python
+	# set up acme.sh
+	bash <(curl https://get.acme.sh/) &> /dev/null
+	# make credential storage directory
+	dir=/root/.cwa/cloudflare
+	mkdir -p -m 700 $dir
+	# if anything failed, die
+	if ! cpan -l 2> /dev/null | grep -q ^URI\:\:Escape || [ ! $(which python 2> /dev/null) ] || [ ! -x /root/.acme.sh/acme.sh ] || [ ! -d $dir ]; then
+		echo "Something failed to install!"
+		echo "I need URI::Escape cpan module, python, acme.sh, and /root/.cwa/cloudflare directory."
+		exit 4
+	fi
+}
+
+store_cf_token() {
+	echo "Please pass the CloudFlare API Token you created for $domain:"
+	read -e token
+	touch $dir/$domain.ini
+	chmod 400 $dir/$domain.ini
+	echo 'CF_Token="'$token'"' > $dir/$domain.ini
+	output=$(curl -s -X GET https://api.cloudflare.com/client/v4/zones -H "Authorization: Bearer $token" -H "Content-Type: application/json")
+	unset token
+
 }
 
 ################
@@ -83,11 +111,11 @@ while getopts :ha:r:xu opt; do #parse arguments
 done
 
 case $mode in
-	add)	:
+	add)	installs
 		;;
 	remove)	:
 		;;
-	update)	:
+	update)	installs
 		;;
 	uninstall)	:
 		;;
@@ -111,3 +139,4 @@ esac
 # 99	bad environment, or -h passed
 # 2	invalid option passed
 # 3	no domain name passed
+# 4	installs failed
