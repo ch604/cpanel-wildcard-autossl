@@ -3,7 +3,7 @@
 #Distributed under BSD-3 license
 #Setup script
 
-version=0.1
+version=0.9
 
 #ensure we have the right environment
 [ "$(ps h -p "$$" -o comm)" != "bash" ] && exec bash $0 $*
@@ -33,10 +33,9 @@ script to set up that domain:
 This will set up *.domain.tld on a cronjob.
 
 	-h		display this help text
-	-a domain.tld	set up domain.tld for autorenew
-	-r domain.tld	remove domain.tld from autorenew
-	-u		update all crons and hooks to the
-			latest version on github
+	-a domain.tld	set up *domain.tld for autorenew
+	-r domain.tld	remove *domain.tld from autorenew
+	-u		update all supporting software
 	-x		uninstall this script, supporting scripts,
 			all configured domains' renewal scripts,
 			and any certificate files outside of
@@ -54,7 +53,7 @@ installs() {
 	[ ! $(which python 2> /dev/null) ] && [ $(which python3 2> /dev/null) ] && ln -s $(which python3) /usr/bin/python
 	[ ! $(which python 2> /dev/null) ] && yum -y -q install python
 	# set up acme.sh
-	bash <(curl https://get.acme.sh/) &> /dev/null
+	bash <(curl -s https://get.acme.sh/) &> /dev/null
 	# make credential storage directory
 	dir=/root/.cwa/cloudflare
 	mkdir -p -m 700 $dir
@@ -122,7 +121,8 @@ EOF
 }
 
 order_new_ssl() {
-	echo "Ordering SSL for *.$domain..."
+	echo "Ordering SSL for *.$domain."
+	echo "This might take a minute or so..."
 	source $dir/$domain.ini
 	export CF_Token CF_Zone_ID
 	/root/.acme.sh/acme.sh --issue --dns dns_cf -d "*.$domain" --server letsencrypt --renew-hook $dir/$domain.hook.sh &> /dev/null
@@ -135,6 +135,18 @@ order_new_ssl() {
 		echo "Please check the log files at /root/.acme.sh/acme.sh.log and try again."
 		exit 10
 	fi
+}
+
+remove_domain() {
+	echo "Are you sure you want to remove $domain? This will only prevent the certificate from being renewed; its certificates will remain inside of cPanel. You will need a new CloudFlare API Token in order to set up the domain again."
+	echo "Press enter to continue, or Ctrl-C to exit."
+	read -s
+	/root/.acme.sh/acme.sh --remove -d "*.$domain"
+	[ -d /root/.acme.sh/\*.$domain ] && \rm -rf /root/.acme.sh/\*.$domain
+	[ -d /root/.acme.sh/\*.$domain_ecc ] && \rm -rf /root/.acme.sh/\*.$domain_ecc
+	\rm -f /root/.cwa/cloudflare/$domain.hook.sh
+	\rm -f /root/.cwa/cloudflare/$domain.ini
+	echo "All done! $domain has been removed from autorenewal."
 }
 
 ################
@@ -179,33 +191,30 @@ case $mode in
 		write_renew_hook
 		order_new_ssl
 		;;
-	remove)	:
+	remove)	installs
+		domaincheck
+		remove_domain
 		;;
 	update)	installs
 		;;
-	uninstall)	:
+	uninstall)	echo "This currently does not do anything."
 		;;
 	*)	:
 		;;
 esac
 
-#add mode, ensure we have the correct supporting software (acme.sh), ensure the domain has a wildcard subdomain set up, ensure that wildcard subdomain has a self-signed cert and add as needed, then ask for the cloudflare api token. write this to a secure file, then ask acme.sh to order the certificate. pull that cert from wherever it goes and add into whm via whmapi. write a post hook for the domain, and a cron job to automatically check the cert nightly.
+#TODO uninstall mode, list out all possible files that we could have created and remove them. print out which domains were set up at this point in time, and when their certs are due to expire. uninstall acme.sh.
 
-#remove mode, remove any files we may have possibly created in relation to the given domain (credentials, post hook, cron job)
+#TODO handle domains removed from cpanel at crontime. presently this will just renew the cert but not install it.
 
-#update mode, find any files we could have created for all cpanel accounts, check their versions against the ones available on github, and then update each file as needed. verify functionality and revert if problems. update acme.sh.
-
-#uninstall mode, list out all possible files that we could have created and all possible rpms we could have installed and remove them. print out which domains were set up at this point in time, and when their certs are due to expire. uninstall acme.sh.
-
-#TODO handle domains removed from cpanel at crontime
-#TODO handle removed api tokens
+#TODO handle removed api tokens. presently the renewal will just fail.
 
 #exit codes:
 # 0	success
-# 99	bad environment, or -h passed
 # 2	invalid option passed
 # 3	no domain name passed
 # 4	installs failed
 # 5	bad api token
-# 6	missing subdomain
+# 6	missing cpanel subdomain
 # 10	acme.sh failed
+# 99	bad environment, or -h passed
