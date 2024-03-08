@@ -35,4 +35,5 @@ When all said and done, the script will make a cronjob and post-hook for each do
 Nope! This mechanism works entirely outside of the cPanel AutoSSL structure, and imports the ordered certificate through the API. You don't even have to have AutoSSL enabled to set up your wildcard subdomain SSL.
 
 * I'm having a problem!
+
 Please file a bug report.
