@@ -118,6 +118,7 @@ write_renew_hook() {
 
 /usr/local/cpanel/bin/whmapi1 installssl domain=*.$domain crt=\$(cat \$CERT_PATH | perl -MURI::Escape -ne 'print uri_escape(\$_)') key=\$(cat \$CERT_KEY_PATH | perl -MURI::Escape -ne 'print uri_escape(\$_)') cab=\$(cat \$CA_CERT_PATH | perl -MURI::Escape -ne 'print uri_escape(\$_)')
 EOF
+	chmod +x $dir/$domain.hook.sh
 }
 
 order_new_ssl() {
@@ -126,8 +127,8 @@ order_new_ssl() {
 	export CF_Token CF_Zone_ID
 	/root/.acme.sh/acme.sh --issue --dns dns_cf -d "*.$domain" --server letsencrypt --renew-hook $dir/$domain.hook.sh &> /dev/null
 	if [ $? -eq 0 ]; then
-		echo "Order success! Installing new cert with whmapi..."
-		bash $dir/$domain.hook.sh
+		echo "Order success! Forcibly renewing to install cert with whmapi..."
+		/root/.acme.sh/acme.sh --renew --force -d "*.$domain" &> /dev/null
 		echo "You should be all set from here on out."
 	else
 		echo "There was a problem running acme.sh!"
