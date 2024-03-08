@@ -169,9 +169,11 @@ while getopts :ha:r:xu opt; do #parse arguments
 			;;
 		a)	mode=add
 			domain=$OPTARG
+			echo $domain | grep -q ^\*\. && domain=$(echo $domain | cut -d. -f2-)
 			;;
 		r)	mode=remove
 			domain=$OPTARG
+			echo $domain | grep -q ^\*\. && domain=$(echo $domain | cut -d. -f2-)
 			;;
 		\?)	echo -e "\n  Invalid option: -$OPTARG"
 			helptext
