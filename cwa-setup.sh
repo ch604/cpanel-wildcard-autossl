@@ -67,7 +67,7 @@ done
 
 #uninstall mode, list out all possible files that we could have created and all possible rpms we could have installed and remove them. print out which domains were set up at this point in time, and when their certs are due to expire. clean up the letsencrypt storage folder.
 
-#add mode, ensure we have the correct rpms installed (based on our os version), ensure the domain has a wildcard subdomain set up, ensure that wildcard subdomain has a self-signed cert and add as needed, then ask for the cloudflare api token. write this to a secure file, then ask certbot to order the certificate. pull that cert from wherever it goes and add into whm via whmapi. write a post hook for the domain, and a cron job for the cpanel user to automatically check the cert nightly.
+#add mode, ensure we have the correct rpms installed (based on our os version), ensure the domain has a wildcard subdomain set up, ensure that wildcard subdomain has a self-signed cert and add as needed, then ask for the cloudflare api token. write this to a secure file, then ask certbot to order the certificate. pull that cert from wherever it goes and add into whm via whmapi. write a post hook for the domain, and a cron job for the cpanel user to automatically check the cert nightly. ensure that certbot.timer is disabled in favor of our own cronjobs.
 
 #remove mode, remove any files we may have possibly created in relation to the given domain (credentials, post hook, cron job)
 
