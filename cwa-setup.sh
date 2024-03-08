@@ -78,6 +78,7 @@ domaincheck() {
 store_cf_token() {
 	echo "Please pass the CloudFlare API Token you created for $domain:"
 	read -e token
+	echo "Testing token..."
 	output=$(mktemp)
 	curl -s -X GET https://api.cloudflare.com/client/v4/zones -H "Authorization: Bearer $token" -H "Content-Type: application/json" > $output
 	if cat $output | python -c 'import sys,json; tokens=json.load(sys.stdin); print (tokens["success"])' | grep -q -i True; then
@@ -106,6 +107,39 @@ for token in tokens["result"] : print (token["name"])'
 	fi
 	\rm -f $output
 	unset token output
+}
+
+write_renew_hook() {
+	echo "Writing renewal hook..."
+	cat > $dir/$domain.hook.sh << EOF
+#!/bin/bash
+#https://github.com/ch604/cpanel-wildcard-autossl
+#post-renewal hook
+
+if [ -d /root/.acme.sh/\*.${domain}_ecc ]; then
+	dir=/root/.acme.sh/\*.${domain}_ecc
+elif [ -d /root/.acme.sh/\*.$domain ]; then
+	dir=/root/.acme.sh/\*.$domain
+else
+	exit 1
+fi
+
+/usr/local/cpanel/bin/whmapi1 installssl domain=*.$domain crt=\$(cat \$dir/*.$domain.cer | perl -MURI::Escape -ne 'print uri_escape(\$_)') key=\$(cat \$dir/*.$domain.key | perl -MURI::Escape -ne 'print uri_escape(\$_)') cab=\$(cat \$dir/ca.cer | perl -MURI::Escape -ne 'print uri_escape(\$_)')
+EOF
+}
+
+order_new_ssl() {
+	echo "Ordering SSL for *.$domain..."
+	source $dir/$domain.ini
+	export CF_Token CF_Zone_ID
+	/root/.acme.sh/acme.sh --issue --dns dns_cf -d "*.$domain" --server letsencrypt --renew-hook $dir/$domain.hook.sh &> /dev/null
+	if [ $? -eq 0 ]; then
+		
+	else
+		echo "There was a problem running acme.sh!"
+		echo "Please check the log files at /root/.acme.sh/acme.sh.log and try again."
+		exit 10
+	fi
 }
 
 ################
@@ -147,6 +181,8 @@ case $mode in
 	add)	installs
 		domaincheck
 		store_cf_token
+		write_renew_hook
+		order_new_ssl
 		;;
 	remove)	:
 		;;
@@ -177,3 +213,4 @@ esac
 # 4	installs failed
 # 5	bad api token
 # 6	missing subdomain
+# 10	acme.sh failed
