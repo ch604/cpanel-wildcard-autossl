@@ -1,5 +1,5 @@
 # cpanel-wildcard-autossl
-A certbot extension which automatically renews and installs wildcard certificates with DNS-01 verification from Cloudflare on cPanel servers. If you have:
+A script which automatically renews and installs wildcard certificates with DNS-01 verification from Cloudflare on cPanel servers. If you have:
 * cPanel/WHM
 * Wildcard Subdomains
 * CloudFlare
@@ -27,9 +27,13 @@ bash /root/cwa-setup.sh -a domain.tld
 
 * When the script requests your CloudFlare API Token, supply the one you made earlier.
 
-When all said and done, the script will make a cronjob and post-hook for each domain you add so that ordered certificates can be set up again when they expire automatically. Using individual hooks and crons also lets you remove domains from this scheme if needed.
+When all said and done, the script will have a cron and post-renewal-hook set up for you to install renewed certificates automatically.
 
 ## FAQ
+* What's under the hood?
+
+It's a bash script that you downloaded from the internet, so I recommend you read through it before you execute it. But in short, it installs acme.sh, verifies the environment is correct for the domain you passed to get a wildcard SSL installed, gets your API token, requests the certificate, and once it is issued, makes a renewal hook which will take those certificates and put them into the whmapi to properly install them. The installation of acme.sh will take care of automatic renewal for us, and the post-renewal-hook is permanent.
+
 * Do I have to use Let's Encrypt as my SSL provider for all domains?
 
 Nope! This mechanism works entirely outside of the cPanel AutoSSL structure, and imports the ordered certificate through the API. You don't even have to have AutoSSL enabled to set up your wildcard subdomain SSL.

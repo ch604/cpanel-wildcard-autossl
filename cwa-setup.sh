@@ -37,11 +37,14 @@ This will set up *.domain.tld on a cronjob.
 	-r domain.tld	remove domain.tld from autorenew
 	-u		update all crons and hooks to the
 			latest version on github
-	-x		uninstall this script, supporting RPMs,
+	-x		uninstall this script, supporting scripts,
 			all configured domains' renewal scripts,
 			and any certificate files outside of
 			cPanel's control (/etc/letsencrypt/*)
 "
+}
+
+installs() {
 }
 
 ################
@@ -79,8 +82,6 @@ while getopts :ha:r:xu opt; do #parse arguments
 	esac
 done
 
-osver=$(rpm --eval %rhel)
-
 case $mode in
 	add)	:
 		;;
@@ -94,13 +95,13 @@ case $mode in
 		;;
 esac
 
-#add mode, ensure we have the correct rpms installed (based on our os version), ensure the domain has a wildcard subdomain set up, ensure that wildcard subdomain has a self-signed cert and add as needed, then ask for the cloudflare api token. write this to a secure file, then ask certbot to order the certificate. pull that cert from wherever it goes and add into whm via whmapi. write a post hook for the domain, and a cron job for the cpanel user to automatically check the cert nightly. ensure that certbot.timer is disabled in favor of our own cronjobs.
+#add mode, ensure we have the correct supporting software (acme.sh), ensure the domain has a wildcard subdomain set up, ensure that wildcard subdomain has a self-signed cert and add as needed, then ask for the cloudflare api token. write this to a secure file, then ask acme.sh to order the certificate. pull that cert from wherever it goes and add into whm via whmapi. write a post hook for the domain, and a cron job to automatically check the cert nightly.
 
 #remove mode, remove any files we may have possibly created in relation to the given domain (credentials, post hook, cron job)
 
-#update mode, find any files we could have created for all cpanel accounts, check their versions against the ones available on github, and then update each file as needed. verify functionality and revert if problems.
+#update mode, find any files we could have created for all cpanel accounts, check their versions against the ones available on github, and then update each file as needed. verify functionality and revert if problems. update acme.sh.
 
-#uninstall mode, list out all possible files that we could have created and all possible rpms we could have installed and remove them. print out which domains were set up at this point in time, and when their certs are due to expire. clean up the letsencrypt storage folder.
+#uninstall mode, list out all possible files that we could have created and all possible rpms we could have installed and remove them. print out which domains were set up at this point in time, and when their certs are due to expire. uninstall acme.sh.
 
 #TODO handle domains removed from cpanel at crontime
 #TODO handle removed api tokens
