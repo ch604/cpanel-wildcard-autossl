@@ -29,6 +29,8 @@ This will set up *.domain.tld on a cronjob.
 	-h		display this help text
 	-a domain.tld	set up domain.tld for autorenew
 	-r domain.tld	remove domain.tld from autorenew
+	-u		update all crons and hooks to the
+			latest version on github
 	-x		uninstall this script, supporting RPMs,
 			all configured domains' renewal scripts,
 			and any certificate files outside of
@@ -41,12 +43,14 @@ if [ "$#" -lt "1" ]; then #no arguments passed
         exit
 fi
 
-while getopts :ha:r:x opt; do #parse arguments
+while getopts :ha:r:xu opt; do #parse arguments
 	case $opt in
 		h)	helptext
 			exit
 			;;
 		x)	mode=uninstall
+			;;
+		u)	mode=update
 			;;
 		a)	mode=add
 			domain=$OPTARG
@@ -54,11 +58,11 @@ while getopts :ha:r:x opt; do #parse arguments
 		r)	mode=remove
 			domain=$OPTARG
 			;;
-		\?)	echo "Invalid option: -$OPTARG"
+		\?)	echo "  Invalid option: -$OPTARG"
 			helptext
 			exit
 			;;
-		:)	echo "Option -$OPTARG requires an argument"
+		:)	echo "  Option -$OPTARG requires an argument"
 			helptext
 			exit
 			;;
