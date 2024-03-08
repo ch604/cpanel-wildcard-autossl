@@ -5,7 +5,7 @@
 
 version=0.1
 
-domain="*.[[REPLACE]]"
+domain="[[REPLACE]]"
 
 #ensure URI::Escape is up to date
 /usr/local/cpanel/bin/cpanm URI::Escape &> /dev/null
