@@ -32,12 +32,16 @@ When all said and done, the script will have a cron and post-renewal-hook set up
 ## FAQ
 * What's under the hood?
 
-It's a bash script that you downloaded from the internet, so I recommend you read through it before you execute it. But in short, it installs acme.sh, verifies the environment is correct for the domain you passed to get a wildcard SSL installed, gets your API token, requests the certificate, and once it is issued, makes a renewal hook which will take those certificates and put them into the whmapi to properly install them. The installation of acme.sh will take care of automatic renewal for us, and the post-renewal-hook is permanent.
+It's a bash script that you downloaded from the internet, so I recommend you read through it before you execute it. But in short, it installs acme.sh, verifies the environment is correct for the domain you passed to get a wildcard SSL installed, gets your API token, requests the certificate, and once it is issued, makes a renewal hook which will take those certificates and put them into the whmapi to properly install them. The installation of acme.sh will take care of automatic renewal for us, and the post-renewal-hook is persistent.
 
 * Do I have to use Let's Encrypt as my SSL provider for all domains?
 
 Nope! This mechanism works entirely outside of the cPanel AutoSSL structure, and imports the ordered certificate through the API. You don't even have to have AutoSSL enabled to set up your wildcard subdomain SSL.
 
-* I'm having a problem!
+* Can you expand the script to do more stuff with acme.sh?
 
-Please file a bug report.
+While it's possible to use alternate SSL or DNS providers, or non-wildcard domains, or manipulate key algos for advanced security, its outside the scope of this specific project. I just needed a way to get wildcard SSLs to stay up to date. Feel free to fork the project or submit patch requests!
+
+* I'm having a problem! Where can I get help?
+
+Please file a bug report :)
