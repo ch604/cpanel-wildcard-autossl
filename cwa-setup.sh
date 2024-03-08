@@ -116,15 +116,7 @@ write_renew_hook() {
 #https://github.com/ch604/cpanel-wildcard-autossl
 #post-renewal hook
 
-if [ -d /root/.acme.sh/\*.${domain}_ecc ]; then
-	dir=/root/.acme.sh/\*.${domain}_ecc
-elif [ -d /root/.acme.sh/\*.$domain ]; then
-	dir=/root/.acme.sh/\*.$domain
-else
-	exit 1
-fi
-
-/usr/local/cpanel/bin/whmapi1 installssl domain=*.$domain crt=\$(cat \$dir/*.$domain.cer | perl -MURI::Escape -ne 'print uri_escape(\$_)') key=\$(cat \$dir/*.$domain.key | perl -MURI::Escape -ne 'print uri_escape(\$_)') cab=\$(cat \$dir/ca.cer | perl -MURI::Escape -ne 'print uri_escape(\$_)')
+/usr/local/cpanel/bin/whmapi1 installssl domain=*.$domain crt=\$(cat \$CERT_PATH | perl -MURI::Escape -ne 'print uri_escape(\$_)') key=\$(cat \$CERT_KEY_PATH | perl -MURI::Escape -ne 'print uri_escape(\$_)') cab=\$(cat \$CA_CERT_PATH | perl -MURI::Escape -ne 'print uri_escape(\$_)')
 EOF
 }
 
