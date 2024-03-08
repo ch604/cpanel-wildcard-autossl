@@ -205,12 +205,6 @@ case $mode in
 		;;
 esac
 
-#TODO uninstall mode, list out all possible files that we could have created and remove them. print out which domains were set up at this point in time, and when their certs are due to expire. uninstall acme.sh.
-
-#TODO handle domains removed from cpanel at crontime. presently this will just renew the cert but not install it.
-
-#TODO handle removed api tokens. presently the renewal will just fail.
-
 #exit codes:
 # 0	success
 # 2	invalid option passed
