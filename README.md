@@ -32,7 +32,7 @@ When all said and done, the script will have a cron and post-renewal-hook set up
 ## FAQ
 * What's under the hood?
 
-It's a bash script that you downloaded from the internet, so I recommend you read through it before you execute it. But in short, it installs [acme.sh](https://github.com/acmesh-official/acme.sh), verifies the environment is correct for the domain you passed to get a wildcard SSL installed, gets your API token, requests the certificate, and once it is issued, makes a renewal hook which will take those certificates and put them into the whmapi to properly install them. The installation of acme.sh will take care of automatic renewal for us, and the post-renewal-hook is persistent.
+It's a bash script that you downloaded from the internet, so I recommend you read through it before you execute it. But in short, it installs [acme.sh](https://github.com/acmesh-official/acme.sh), verifies the environment is correct for the domain you passed to get a wildcard SSL installed, gets your API token, requests the certificate, and makes a renewal hook which will take those certificates and put them into the whmapi to properly install them. The installation of acme.sh will take care of automatic renewal for us, and the post-renewal-hook is persistent.
 
 * Do I have to use Let's Encrypt as my SSL provider for all domains?
 
@@ -40,7 +40,9 @@ Nope! This mechanism works entirely outside of the cPanel AutoSSL structure, and
 
 * Can you expand the script to do more stuff with acme.sh?
 
-While it's possible to use alternate SSL or DNS providers, or non-wildcard domains, or manipulate key algos for advanced security, its outside the scope of this specific project. I just needed a way to get wildcard SSLs to stay up to date. Feel free to fork the project or submit patch requests!
+While it's possible to use alternate SSL or DNS providers, or non-wildcard domains, or manipulate key algos for advanced security, its outside the scope of this specific project. I just needed a way to get wildcard SSLs to stay up to date which was simple to use. Feel free to fork the project or submit patch requests!
+
+If you want to set up acme.sh on your own, and just use the 'import this certificate to cPanel' part, you can grab 'renew-hook.sh' and use that as your --renew-hook argument for acme.sh manually.
 
 * I'm having a problem! Where can I get help?
 

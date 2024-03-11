@@ -57,6 +57,7 @@ installs() {
 	# make credential storage directory
 	dir=/root/.cwa/cloudflare
 	mkdir -p -m 700 $dir
+	write_renew_hook
 	# if anything failed, die
 	if ! cpan -l 2> /dev/null | grep -q ^URI\:\:Escape || [ ! $(which python 2> /dev/null) ] || [ ! -x /root/.acme.sh/acme.sh ] || [ ! -d $dir ]; then
 		echo "Something failed to install!"
@@ -110,14 +111,14 @@ for token in tokens["result"] : print (token["name"])'
 
 write_renew_hook() {
 	echo "Writing renewal hook..."
-	cat > $dir/$domain.hook.sh << EOF
+	cat > $dir/renew-hook.sh << EOF
 #!/bin/bash
 #https://github.com/ch604/cpanel-wildcard-autossl
 #post-renewal hook
 
-/usr/local/cpanel/bin/whmapi1 installssl domain=*.$domain crt=\$(cat \$CERT_PATH | perl -MURI::Escape -ne 'print uri_escape(\$_)') key=\$(cat \$CERT_KEY_PATH | perl -MURI::Escape -ne 'print uri_escape(\$_)') cab=\$(cat \$CA_CERT_PATH | perl -MURI::Escape -ne 'print uri_escape(\$_)')
+/usr/local/cpanel/bin/whmapi1 installssl domain=\$Le_Domain crt=\$(cat \$CERT_PATH | perl -MURI::Escape -ne 'print uri_escape(\$_)') key=\$(cat \$CERT_KEY_PATH | perl -MURI::Escape -ne 'print uri_escape(\$_)') cab=\$(cat \$CA_CERT_PATH | perl -MURI::Escape -ne 'print uri_escape(\$_)')
 EOF
-	chmod +x $dir/$domain.hook.sh
+	chmod +x $dir/renew-hook.sh
 }
 
 order_new_ssl() {
@@ -125,7 +126,7 @@ order_new_ssl() {
 	echo "This might take a minute or so..."
 	source $dir/$domain.ini
 	export CF_Token CF_Zone_ID
-	/root/.acme.sh/acme.sh --issue --dns dns_cf -d "*.$domain" --server letsencrypt --renew-hook $dir/$domain.hook.sh &> /dev/null
+	/root/.acme.sh/acme.sh --issue --dns dns_cf -d "*.$domain" --server letsencrypt --renew-hook $dir/renew-hook.sh &> /dev/null
 	if [ $? -eq 0 ]; then
 		echo "Order success! Forcibly renewing to install cert with whmapi..."
 		/root/.acme.sh/acme.sh --renew --force -d "*.$domain" &> /dev/null
@@ -190,7 +191,6 @@ case $mode in
 	add)	installs
 		domaincheck
 		store_cf_token
-		write_renew_hook
 		order_new_ssl
 		;;
 	remove)	installs
