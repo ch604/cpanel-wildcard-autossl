@@ -42,7 +42,7 @@ Nope! This mechanism works entirely outside of the cPanel AutoSSL structure, and
 
 While it's possible to use alternate SSL or DNS providers, or non-wildcard domains, or manipulate key algos for advanced security, its outside the scope of this specific project. I just needed a way to get wildcard SSLs to stay up to date which was simple to use. Feel free to fork the project or submit patch requests!
 
-If you want to set up acme.sh on your own, and just use the 'import this certificate to cPanel' part, you can grab 'renew-hook.sh' and use that as your --renew-hook argument for acme.sh manually.
+If you want to set up acme.sh on your own, and just use the 'import a certificate to cPanel' part, you can grab 'renew-hook.sh' and use that as your --renew-hook argument for acme.sh manually. Just make sure you have URI::Escape installed through cpan. acme.sh handles the cronjob for certificates it orders.
 
 * I'm having a problem! Where can I get help?
 
