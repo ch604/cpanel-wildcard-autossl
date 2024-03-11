@@ -3,7 +3,7 @@
 #Distributed under BSD-3 license
 #Setup script
 
-version=1.0
+version=1.1
 
 #ensure we have the right environment
 [ "$(ps h -p "$$" -o comm)" != "bash" ] && exec bash $0 $*
