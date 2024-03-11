@@ -3,7 +3,8 @@
 #Distributed under BSD-3 license
 #Setup script
 
-version=1.1
+version=1.2
+dir=/root/.cwa
 
 #ensure we have the right environment
 [ "$(ps h -p "$$" -o comm)" != "bash" ] && exec bash $0 $*
@@ -55,13 +56,12 @@ installs() {
 	# set up acme.sh
 	bash <(curl -s https://get.acme.sh/) &> /dev/null
 	# make credential storage directory
-	dir=/root/.cwa/cloudflare
 	mkdir -p -m 700 $dir
-	write_renew_hook
+	[ ! -s $dir/renew-hook.sh ] && write_renew_hook
 	# if anything failed, die
 	if ! cpan -l 2> /dev/null | grep -q ^URI\:\:Escape || [ ! $(which python 2> /dev/null) ] || [ ! -x /root/.acme.sh/acme.sh ] || [ ! -d $dir ]; then
 		echo "Something failed to install!"
-		echo "I need URI::Escape cpan module, python, acme.sh, and /root/.cwa/cloudflare directory."
+		echo "I need URI::Escape cpan module, python, acme.sh, and $dir directory."
 		exit 4
 	fi
 }
@@ -145,8 +145,7 @@ remove_domain() {
 	/root/.acme.sh/acme.sh --remove -d "*.$domain"
 	[ -d /root/.acme.sh/\*.$domain ] && \rm -rf /root/.acme.sh/\*.$domain
 	[ -d /root/.acme.sh/\*.$domain_ecc ] && \rm -rf /root/.acme.sh/\*.$domain_ecc
-	\rm -f /root/.cwa/cloudflare/$domain.hook.sh
-	\rm -f /root/.cwa/cloudflare/$domain.ini
+	\rm -f $dir/$domain.ini
 	echo "All done! $domain has been removed from autorenewal."
 }
 
